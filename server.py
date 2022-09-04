@@ -1,11 +1,19 @@
 from socket import *
-from sqlite3 import connect
 import sys
+
+# server setup
+serverPort = int(sys.argv[1])
+serverSocket = socket(AF_INET,SOCK_STREAM) 
+serverSocket.bind(('',serverPort))
+serverSocket.listen(1) 
+connectionSocket, clientAddr = serverSocket.accept()
 
 # key-value store
 key_value = {}
 # counter store
 counter = {} 
+
+FIVE_MB = 5242880
 
 def parse(header):
     # array of non-empty substrings delimited with white-spaces 
@@ -38,7 +46,6 @@ message = connectionSocket.recv(2048)
 connectionSocket.send(message)
 connectionSocket.close()
 
-# TODO
 # Read header request 1 byte at a time to account for intermittent transmission
 def execute(parsedMessage):
     method = parsedMessage[0]
@@ -66,11 +73,11 @@ def execute(parsedMessage):
         length = parsedMessage[3]
         # POST key-value
         if path == "key":
-            if key in key_value:
+            if key in counter:
                 return '405 MethodNotAllowed  '
             value = b'' # value is a binary string
-            while (value < length):
-                connectionSocket.recv(1) # handle intermittent connection
+            while (value < max(length, FIVE_MB)):
+                value += connectionSocket.recv(1) # handle intermittent connection
             key_value.update({key: value})
         # POST counter
         if path == "counter":
@@ -79,12 +86,16 @@ def execute(parsedMessage):
                 return '405 MethodNotAllowed  '
             # key does not exist in key-value
             else:
+                count = b''
+                while (count < max(length, FIVE_MB)):
+                    count += connectionSocket.recv(1) # handle intermittent connection
+                count = int(value)
                 # insertion
                 if counter.get(key) == None:
-                    counter.update({key: length})
+                    counter.update({key: count})
                 # update
                 else:
-                    counter[key] += value
+                    counter[key] += count
                 return '200 OK  '
 
     if method == "DELETE":
@@ -108,3 +119,16 @@ def execute(parsedMessage):
             else:
                 body = counter.pop(key, None)
                 return '200 OK content-length ' + len(body) + '  ' + body
+
+while True:
+    message = connectionSocket.recv(1)
+
+    if len(message) == 0:
+        break
+
+    while (message.find(b'  ') == -1):
+        message += connectionSocket.recv(1)
+    
+    print(execute(parse(message)))
+
+

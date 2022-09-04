@@ -68,7 +68,7 @@ def execute(parsedMessage):
             if key in counter:
                 return '405 MethodNotAllowed  '
             value = b'' # value is a binary string
-            while (value < max(length, FIVE_MB)):
+            while (len(value) < max(length, FIVE_MB)):
                 value += connectionSocket.recv(1) # handle intermittent connection
             key_value.update({key: value})
         # POST counter
@@ -79,7 +79,7 @@ def execute(parsedMessage):
             # key does not exist in key-value
             else:
                 count = b''
-                while (count < max(length, FIVE_MB)):
+                while (len(count) < max(length, FIVE_MB)):
                     count += connectionSocket.recv(1) # handle intermittent connection
                 count = int(value)
                 # insertion
@@ -121,7 +121,7 @@ while True:
     while (message.find(b'  ') == -1):
         message += connectionSocket.recv(1)
     
-    output = (execute(parse(message)))
+    output = execute(parse(message.decode()))
     connectionSocket.send(output)
 
 connectionSocket.close()

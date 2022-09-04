@@ -35,17 +35,6 @@ def parse(header):
     
     return [method, path, key, len]
 
-
-serverPort = 2105
-serverSocket = socket(AF_INET, SOCK_STREAM)
-serverSocket.bind(('', serverPort))
-serverSocket.listen()
-print('Server is ready to receive message')
-connectionSocket, clientAddr = serverSocket.accept()
-message = connectionSocket.recv(2048)
-connectionSocket.send(message)
-connectionSocket.close()
-
 # Read header request 1 byte at a time to account for intermittent transmission
 def execute(parsedMessage):
     method = parsedMessage[0]
@@ -58,16 +47,19 @@ def execute(parsedMessage):
         # get key-value
         if path == "key":
             body = key_value.get(key)
-            # get counter
-            count = counter.get(key, 'Infinity')
-            # decrement counter
-            if count != 'Infinity':
-                counter.update({key: count - 1})
+            # decrement counter if exists
+            if key in counter:
+                counter[key] -= 1
+                # remove key-value if zero
+                if counter[key] <= 0:
+                    counter.pop(key, None)
+                    key_value.pop(key, None)
+
         # get counter
         if path == "counter":
-            body = counter.get(key, 'Infinity')
+            body = str(counter.get(key, 'Infinity'))
         
-        return '200 OK content-length ' + len(body) + '  ' + body
+        return '200 OK Content-Length '.encode() + str(len(body)).encode() + '  ' + body.encode()
 
     if method == "POST":
         length = parsedMessage[3]
@@ -106,8 +98,8 @@ def execute(parsedMessage):
         if path == "key":
             # counter value does not exist
             if key not in count:
-                body = key_value.pop(key, None)
-                return '200 OK content-length ' + len(body) + '  ' + body
+                body = str(key_value.pop(key, None))
+                return '200 OK Content-Length '.encode() + str(len(body)).encode() + '  ' + body.encode()
             else: 
                 return '405 MethodNotAllowed  '
         # DELETE counter
@@ -117,8 +109,8 @@ def execute(parsedMessage):
                 return '404 NotFound  '
             # counter value exist
             else:
-                body = counter.pop(key, None)
-                return '200 OK content-length ' + len(body) + '  ' + body
+                body = str(counter.pop(key, None))
+                return '200 OK Content-Length ' + str(len(body)).encode() + '  ' + body.encode()
 
 while True:
     message = connectionSocket.recv(1)
@@ -129,6 +121,8 @@ while True:
     while (message.find(b'  ') == -1):
         message += connectionSocket.recv(1)
     
-    print(execute(parse(message)))
+    output = (execute(parse(message)))
+    connectionSocket.send(output)
 
+connectionSocket.close()
 

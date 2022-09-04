@@ -88,7 +88,7 @@ def execute(parsedMessage):
                     count += connectionSocket.recv(1) # handle intermittent connection
                 # count is an int
                 count = int(count)
-                                # insertion
+                # insertion
                 if counter.get(key) == None:
                     counter.update({key: count})
                 # update
@@ -118,13 +118,13 @@ def execute(parsedMessage):
                 body = str(counter.pop(key, None))
                 return '200 OK Content-Length '.encode() + str(len(body)).encode() + b'  ' + body.encode()
 
+    # Invalid request method
     return '404 NotFound  '.encode()
 
 # MAIN
 while True:
     connectionSocket, clientAddr = serverSocket.accept()
     while True:
-        print(connectionSocket.recv(10000).decode('utf-8', 'ignore'))
         message = connectionSocket.recv(1)
 
         if len(message) == 0:

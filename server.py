@@ -40,7 +40,6 @@ connectionSocket.close()
 
 # TODO
 # Read header request 1 byte at a time to account for intermittent transmission
-<<<<<<< HEAD
 def execute(parsedMessage):
     method = parsedMessage[0]
     path = parsedMessage[1]
@@ -109,7 +108,3 @@ def execute(parsedMessage):
             else:
                 body = counter.pop(key, None)
                 return '200 OK content-length ' + len(body) + '  ' + body
-=======
-# if GET/DELETE, validate path and key -> if path empty means is wrong
-# if POST, get body and validate path, key and length -> if path empty or len == -1 means its wrong
->>>>>>> 83ff6ab203023b10acfbc49b809c494fc142eacf

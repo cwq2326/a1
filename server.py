@@ -8,35 +8,25 @@ key_value = {}
 counter = {} 
 
 def parse(header):
-    method = ""
-    path = ""
-    key = ""
-    length = -1
+    # array of non-empty substrings delimited with white-spaces 
+    split = header.split(" ")
+    method = split[0]
+    path = (split[1].split("/"))[1]
+    key = (split[1].split("/"))[2]
+    len = -1
 
-    if (header[0:3].upper() == "GET"):
-        method = "GET"
-    elif (header[0:6].upper() == "DELETE"):
-        method = "DELETE"
-    else:
-        method ="POST"
-
-    if (header[len(method)+2:len(method)+5] == "key"):
-        path = "key"
-    elif (header[len(method)+2:len(method)+9] == "counter"):
-        path = "counter"
-
-    # GET/DELETE CLAUSE
-    if (method == "GET" or method == "DELETE"):
-        key = header[len(method) + len(path) + 3:]
+    if (not (path == "key" or path == "counter")): # path here is case-sensitive
+        path = ""
+    
+    if (method.upper() == "GET" or method.upper() == "DELETE"):
         return [method, path, key]
-    # POST CLAUSE
-    else:
-        for i in range(len(method) + len(path) + 3, len(header)):
-          if (header[i] == " "):
-            break
-          key+=header[i]
-        length = header[len(method) + len(path) + len(key) + 19:]
-        return [method, path, key, length]
+
+    if ("Content-Length" in split):
+        idx = split.index("Content-Length")
+        len = int(split[idx + 1])
+    
+    return [method, path, key, len]
+
 
 serverPort = 2105
 serverSocket = socket(AF_INET, SOCK_STREAM)
@@ -50,6 +40,7 @@ connectionSocket.close()
 
 # TODO
 # Read header request 1 byte at a time to account for intermittent transmission
+<<<<<<< HEAD
 def execute(parsedMessage):
     method = parsedMessage[0]
     path = parsedMessage[1]
@@ -118,3 +109,7 @@ def execute(parsedMessage):
             else:
                 body = counter.pop(key, None)
                 return '200 OK content-length ' + len(body) + '  ' + body
+=======
+# if GET/DELETE, validate path and key -> if path empty means is wrong
+# if POST, get body and validate path, key and length -> if path empty or len == -1 means its wrong
+>>>>>>> 83ff6ab203023b10acfbc49b809c494fc142eacf

@@ -20,7 +20,7 @@ error405 = '405 MethodNotAllowed  '.encode()
 
 while True:
     connectionSocket, addr = serverSocket.accept()
-    message = connectionSocket.recv(5000000) 
+    message = connectionSocket.recv(FIVE_MB) 
     
     while len(message) != 0 : 
         headerEnd = message.find(b'  ')
@@ -33,7 +33,6 @@ while True:
             method = split[0].upper()
             path = (split[1].split("/"))[1]
             key = (split[1].split("/"))[2]
-            output = error404
 
             if method == "GET":
                 if key not in key_value:
